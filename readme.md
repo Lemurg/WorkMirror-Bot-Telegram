@@ -173,17 +173,12 @@ WorkMirror\_bot/
 ### **5.1 Company**
 
     class Company(Base):
-    `    `\_\_tablename\_\_ = "companies"
-    
-    `    `id = Column(Integer, primary\_key=True)
-    
-    `    `company\_code = Column(String, unique=True, nullable=False)
-    
-    `    `company\_name = Column(String, nullable=True)
-    
-    `    `questions = relationship("Question", back\_populates="company")
-    
-    `    `access\_codes = relationship("AccessCode", back\_populates="company")
+        \_\_tablename\_\_ = "companies"
+        id = Column(Integer, primary\_key=True)
+        company\_code = Column(String, unique=True, nullable=False)
+        company\_name = Column(String, nullable=True)
+        questions = relationship("Question", back\_populates="company")
+        access\_codes = relationship("AccessCode", back\_populates="company")
 
 - **company\_code** — уникальный код компании, вводимый пользователем.
 - **company\_name** — название компании (необязательно).
@@ -191,66 +186,42 @@ WorkMirror\_bot/
 ### **5.2 AccessCode**
 
     class AccessCode(Base):
-    
-    `    `\_\_tablename\_\_ = "access\_codes"
-    
-    `    `id = Column(Integer, primary\_key=True)
-    
-    `    `company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    
-    `    `access\_code = Column(String, nullable=False)  # хранится в хешированном виде
+    \_\_tablename\_\_ = "access\_codes"
+    id = Column(Integer, primary\_key=True)
+    company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    access\_code = Column(String, nullable=False)  # хранится в хешированном виде
 
 - **access\_code** — код доступа, **захешированный** через bcrypt.
 
 ### **5.3 Question**
 
     class Question(Base):
-    
-    `    `\_\_tablename\_\_ = "questions"
-    
-    `    `id = Column(Integer, primary\_key=True)
-    
-    `    `company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    
-    `    `question\_text = Column(Text, nullable=False)
-    
-    `    `question\_type = Column(String, nullable=True)
-    
-    `    `constraints   = Column(Text, nullable=True)  # JSON
-    
-    `    `company = relationship("Company", back\_populates="questions")
+        \_\_tablename\_\_ = "questions"
+        id = Column(Integer, primary\_key=True)
+        company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+        question\_type = Column(String, nullable=True)
+        constraints   = Column(Text, nullable=True)  # JSON
+        company = relationship("Company", back\_populates="questions")
 
 ### **5.4 Answer**
 
     class Answer(Base):
-    
-    `    `\_\_tablename\_\_ = "answers"
-    
-    `    `id = Column(Integer, primary\_key=True)
-    
-    `    `company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    
-    `    `question\_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
-    
-    `    `user\_id = Column(String, nullable=True)
-    
-    `    `answer\_text = Column(Text, nullable=False)
-    
-    `    `created\_at = Column(DateTime, default=datetime.datetime.now)
+        \_\_tablename\_\_ = "answers"
+        id = Column(Integer, primary\_key=True)
+        company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+        question\_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+        user\_id = Column(String, nullable=True)
+        answer\_text = Column(Text, nullable=False)
+        created\_at = Column(DateTime, default=datetime.datetime.now)
 
 ### **5.5 AnalysisLog**
 
     class AnalysisLog(Base):
-    
-    `    `\_\_tablename\_\_ = "analysis\_logs"
-    
-    `    `id = Column(Integer, primary\_key=True)
-    
-    `    `company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
-    
-    `    `created\_at = Column(DateTime, default=datetime.datetime.now)
-    
-    `    `analysis\_result = Column(Text, nullable=True)  # JSON-ответ от YandexGPT
+        \_\_tablename\_\_ = "analysis\_logs"
+        id = Column(Integer, primary\_key=True)
+        company\_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+        created\_at = Column(DateTime, default=datetime.datetime.now)
+        analysis\_result = Column(Text, nullable=True)  # JSON-ответ от YandexGPT
 
 -----
 ## **6. Основные процессы**
@@ -281,32 +252,21 @@ WorkMirror\_bot/
 1. **Получение IAM-токена** (get\_iam\_token):
 
        def get\_iam\_token():
-    
-       `    `response = requests.post(
-    
-       `        `"https://iam.api.cloud.yandex.net/iam/v1/tokens",
-    
-       `        `json={"yandexPassportOauthToken": YANDEX\_OAUTH\_TOKEN}
-    
-       `    `)
-    
-       `    `response.raise\_for\_status()
-    
-       `    `return response.json()["iamToken"]
+           response = requests.post(
+               "https://iam.api.cloud.yandex.net/iam/v1/tokens",
+               json={"yandexPassportOauthToken": YANDEX\_OAUTH\_TOKEN}
+           )
+           response.raise\_for\_status()
+           return response.json()["iamToken"]
 
 1. **Отправка запроса** (request\_yandex\_gpt):
 
        def request\_yandex\_gpt(user\_text: str) -> dict:
-    
-       `    `token = get\_iam\_token()
-    
-       `    `headers = {"Authorization": f"Bearer {token}", ...}
-    
-       `    `data = {...}  # Формируем payload
-    
-       `    `response = requests.post(YANDEX\_GPT\_API\_ENDPOINT, headers=headers, json=data)
-    
-       `    `return response.json()
+           token = get\_iam\_token()
+           headers = {"Authorization": f"Bearer {token}", ...}
+           data = {...}  # Формируем payload
+           response = requests.post(YANDEX\_GPT\_API\_ENDPOINT, headers=headers, json=data)
+           return response.json()
 
 1. **Интеграция:** при вводе «Результаты» бот формирует общий текст отзывов, отправляет их в Я.GPT и получает «анализ», который выводит пользователю.
 -----
